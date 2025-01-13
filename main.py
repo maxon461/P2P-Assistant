@@ -4,6 +4,20 @@ from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import time
 from datetime import datetime
+import pygame
+import re
+
+
+def play_alert():
+    pygame.mixer.init()
+    pygame.mixer.music.load('alert-sound-87478.mp3')
+    pygame.mixer.music.play()
+    while pygame.mixer.music.get_busy():
+        time.sleep(1)
+
+
+def has_letters(nickname):
+    return bool(re.search('[a-zA-Z]', nickname))
 
 
 def check_rates():
@@ -39,6 +53,10 @@ def check_rates():
                 continue
             nickname = nickname_tag.text.strip()
 
+            # Skip nicknames without letters
+            if not has_letters(nickname):
+                continue
+
             payment_methods_elements = ad.find_all('div', class_='PaymentMethodItem__text')
             payment_methods = [method.text.strip() for method in payment_methods_elements]
 
@@ -67,10 +85,11 @@ def check_rates():
         better_rates_found = False
 
         for result in results:
-            if result['nickname'] != "MaxAuto_" and result['price'] > maxauto_rate:
+            if result['nickname'] != "MaxAuto_" and result['price'] < maxauto_rate:
                 if not better_rates_found:
                     print("\nBetter rates found:")
                     better_rates_found = True
+                    play_alert()  # Play sound when better rates are found
                 print(
                     f"Nickname: {result['nickname']}, Payment Methods: {', '.join(result['payment_methods'])}, Exchange Rate: {result['price']} PLN")
 
